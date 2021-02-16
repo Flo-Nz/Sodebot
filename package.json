@@ -1,0 +1,23 @@
+{
+  "name": "discordbotgit",
+  "version": "1.0.0",
+  "description": "Ce bot a pour vocation de lier l'utilisation de git et votre serveur discord.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Flo-Nz/DiscordBotGit.git"
+  },
+  "author": "Flo-Nz",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Flo-Nz/DiscordBotGit/issues"
+  },
+  "homepage": "https://github.com/Flo-Nz/DiscordBotGit#readme",
+  "dependencies": {
+    "discord.js": "^12.5.1",
+    "dotenv": "^8.2.0"
+  }
+}
