@@ -27,7 +27,7 @@ client.on("message", function (message) {
     // On initialise un commandBody qui contiendra le contenu entier de la commande tapée par l'utilisateur, en décalant la prise en compte de la longueur du préfixe
     const commandBody = message.content.slice(prefix.length);
     // On récupère un tableau contenant le nom de la commande (après le  !) ainsi que les éventuels arguments (après le !cmd )
-    const arguments = commandBody.split(' ');
+    const arguments = commandBody.trim().split(/ +/);
     // On supprime le premier argument du tableau (il s'agit de la commande) et on la renvoie, après conversion en minuscule, à la constante command
     const command = arguments.shift().toLowerCase();
 
