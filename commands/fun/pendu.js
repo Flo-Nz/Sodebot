@@ -1,7 +1,8 @@
 const Discord = require('discord.js');
 const dico = require('./ressources/dico');
 const dotenv = require('dotenv').config();
-const Game = require('./ressources/game');
+
+// TODO : ajouter les embed messages, avec des images de pendu ! Possibilité en arguments de mettre un max d'essai
 
 module.exports = {
 	name: 'pendu',
