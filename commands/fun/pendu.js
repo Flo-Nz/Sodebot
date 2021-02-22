@@ -6,6 +6,7 @@ const Game = require('./ressources/game');
 module.exports = {
 	name: 'pendu',
 	description: 'Un jeu du pendu !',
+	aliases: ['devinette'],
 	guildOnly: true,
 	startedChannels: [],
 	async execute(message, args) {

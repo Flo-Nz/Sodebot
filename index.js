@@ -33,6 +33,8 @@ for (const folder of commandFolders) {
     }
 }
 
+const cooldowns = new Discord.Collection();
+
 
 /**************************************************
  * 
@@ -55,13 +57,22 @@ client.on("message", function (message) {
     // Shift method will detete the first arg inside args and return it : the first arg should be our command 
     const commandName = args.shift().toLowerCase();
 
+    // If this code is executed, the command should exists so we make a variable which is the actual command object
+    const command = client.commands.get(commandName)
+    || client.commands.find(cmd => cmd.aliases && cmd.aliases.includes(commandName));
+
     // If our commands collection doesn't have our command, stop there.
-    if (!client.commands.has(commandName)) {
-        message.reply('cette commande n\'existe pas !')
+    if (!command) {
+        message.reply(`cette commande n'existe pas ! Tape \`!help\` pour plus d'informations sur les commandes disponibles.`);
         return;
     }
-    // If this code is executed, the command should exists so we make a variable which is the actual command object
-    const command = client.commands.get(commandName);
+
+    if (command.permissions) {
+        const authorPerms = message.channel.permissionsFor(message.author);
+        if (!authorPerms || !authorPerms.has(command.permissions)) {
+            return message.reply('Tu ne peux pas faire ça !');
+        }
+    }
 
     // If the command expects arguments, we have to verify if the user specified it. If not, return an error.
     if (command.args && !args.length) {
@@ -78,6 +89,27 @@ client.on("message", function (message) {
     if (command.guildOnly && message.channel.type === 'dm') {
         return message.reply('Je ne peux pas faire cette commande en message privé !');
     }
+
+    // COOLDOWNS
+
+    if (!cooldowns.has(command.name)) {
+        cooldowns.set(command.name, new Discord.Collection());
+    }
+    
+    const now = Date.now();
+    const timestamps = cooldowns.get(command.name);
+    const cooldownAmount = (command.cooldown || 3) * 1000;
+    
+    if (timestamps.has(message.author.id)) {
+        const expirationTime = timestamps.get(message.author.id) + cooldownAmount;
+
+	    if (now < expirationTime) {
+		    const timeLeft = (expirationTime - now) / 1000;
+		    return message.reply(`Merci d'attendre ${timeLeft.toFixed(1)} secondes de plus avant de réutiliser la commande \`${command.name}\` .`);
+	    }
+    }
+    timestamps.set(message.author.id, now);
+    setTimeout(() => timestamps.delete(message.author.id), cooldownAmount);
 
     // Execute the command. If there is an error, catch it and reply an error message so it won't crash our bot. 
     try {
