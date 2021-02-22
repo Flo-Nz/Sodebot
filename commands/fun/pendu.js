@@ -10,12 +10,13 @@ module.exports = {
 	async execute(message, args) {
 
 		try {
-			
+			// If the game is already started, then return immediately.
 			if (this.started) {
 				message.reply(`Le jeu du pendu est déjà lancé sur le channel !`);
 				return;
 			}
 
+			// Starting the game.
 			this.started = true;
 			message.channel.send('Lancement du jeu du pendu !');
 
@@ -33,27 +34,53 @@ module.exports = {
 			const wordToFindLetters = wordToFind.split('');
 			// 4 - replace all the values of our array with "_" in a new array
 			let maskedWordToFind = wordToFind.split('').fill('_');
+			// 5 - stock user answers and tries
+			let userLetterAnswers = [];
+			let userWordAnswers = [];
 			let tries = 0;
 
+			// This filter will be used to push only the answers that don't begin with the prefix, are not from a bot, and don't include spaces in the awaitMessages collection.
 			const filter = msg => msg.content.startsWith(process.env.PREFIX) === false && msg.author.bot === false && msg.content.includes(' ') === false;
 
+			// This is the round fonction. It is async as it wait for answers, and it is also recursive while the word isn't find yet.
 			const startRound = async () => {
-				await message.channel.send(`Voici le mot à trouver : \`${maskedWordToFind.join(' ')}\``)
+
+				if (userLetterAnswers.length) {
+					let reply = `**Voici le mot à trouver : \`${maskedWordToFind.join(' ')}\`**. \nEssais : **${tries}**. \nLes lettres \`${userLetterAnswers.join(',')}\` ont déjà été proposées.`;
+
+					if (userWordAnswers.length) {
+						reply += `Mots proposés : \`${userWordAnswers.join(', ')}\`.`;
+					}
+					await message.channel.send(reply);
+				} else {
+					await message.channel.send(`Voici le mot à trouver : \`${maskedWordToFind.join(' ')}\``);
+				}
 				await message.channel.awaitMessages(filter, {
 						max: 1,
-						time: 30000,
+						time: 3600000,
 						errors: ['time']
 				})
+				// when we have an answer, start this treatment
 				.then((message => {
+					// there is only one message in our "message collection" so we only stock this message into the message variable.
 					message = message.first();
 					
-					// Cas où le message ne contient qu'un seul caractère
+					// First, case when we have only one letter
 					if (message.content.length === 1) {
 						let proposedLetter = message.content.toUpperCase();
+						// If the letter is already in our userLetterAnswers array, start a new round immediately
+						if (userLetterAnswers.includes(proposedLetter)) {
+							message.channel.send(`La lettre ${proposedLetter} a déjà été proposée !`);
+							return startRound();
+						}
+						// Else, push the answer into the userLetterAnswers array, increment the counter of tries and initialize the letterFound counter, and the index.
+						userLetterAnswers.push(proposedLetter);
 						tries++;
 						message.channel.send(`${message.author} propose la lettre : ${proposedLetter}`);
 						let letterFound = 0;
 						let index = 0;
+
+						// For each letter of the wordToFind array, if the proposedLetter is the same as the letter, replace the underscore in the maskedword with the proposedLetter (we can do it by the index counter so we must increment at the end of the loop).
 						for (const letter of wordToFindLetters) {
 							if (proposedLetter == letter) {
 								maskedWordToFind[index] = proposedLetter;
@@ -62,24 +89,34 @@ module.exports = {
 							index++;
 						}
 
+						// Send the correct message to the user if there is a letter found or not
 						if (letterFound === 0) {
-							message.channel.send(`C'est raté ! ${message.author} n'a pas trouvé de lettre, quel naze !`);
+							message.channel.send(`C'est raté ! ${message.author} n'a pas trouvé de lettre, quel(le) naze !`);
 						} else if (letterFound === 1) {
 							message.channel.send(`Bravo ${message.author} ! tu as trouvé 1 lettre du mot.`);
 						} else if (letterFound > 1) {
 							message.channel.send(`Génial ! ${message.author} a trouvé ${letterFound} lettres. Quelle classe !`);
 						}
 
+						// If maskedwordtofind is equel to the wordtofind all the letters have been found so we can end the game.
 						if (maskedWordToFind.join('') === wordToFind) {
 							message.channel.send(`FELICITATIONS ! Tu as trouvé le mot ! Il s'agissait bien de ${wordToFind}`);
 							message.channel.send(`Il a fallu ${tries} essais pour trouver. N'hésitez pas à relancer en tapant la commande : \`!pendu\``);
 							this.started = false;
 							return;
+						// Else we start a new round.
 						} else {
-							startRound();
+							return startRound();
 						}
+
+					// If the answer is a word, just see if it matches with the wordtofind or not
 					} else if (message.content.length > 1) {
 						let proposedWord = message.content.toUpperCase();
+						if (userWordAnswers.includes(proposedWord)) {
+							message.channel.send(`Le mot ${proposedWord} a déjà été proposé !`);
+							return startRound();
+						}
+						userWordAnswers.push(proposedWord);
 						tries++;
 						message.channel.send(`${message.author} nous propose le mot : ${proposedWord}...`);
 						if (proposedWord === wordToFind) {
@@ -88,8 +125,8 @@ module.exports = {
 							this.started = false;
 							return;
 						} else {
-							message.channel.send(`Bien tenté ! Dommage de gâcher un essai pour ça... Ce n'est pas bon !`);
-							startRound();
+							message.channel.send(`Bien tenté ! Mais... Ce n'est pas bon !`);
+							return startRound();
 						}
 					}
 				}))
