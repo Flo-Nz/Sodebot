@@ -10,7 +10,12 @@ module.exports = {
 	async execute(message, args) {
 
 		try {
-		
+			
+			if (this.started) {
+				message.reply(`Le jeu du pendu est déjà lancé sur le channel !`);
+				return;
+			}
+
 			this.started = true;
 			message.channel.send('Lancement du jeu du pendu !');
 
@@ -30,7 +35,7 @@ module.exports = {
 			let maskedWordToFind = wordToFind.split('').fill('_');
 			let tries = 0;
 
-			const filter = msg => msg.content.startsWith !== process.env.PREFIX;
+			const filter = msg => msg.content.startsWith(process.env.PREFIX) === false && msg.author.bot === false && msg.content.includes(' ') === false;
 
 			const startRound = async () => {
 				await message.channel.send(`Voici le mot à trouver : \`${maskedWordToFind.join(' ')}\``)
