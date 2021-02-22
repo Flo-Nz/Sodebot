@@ -1,30 +1,31 @@
 const Discord = require('discord.js');
 const dico = require('./ressources/dico');
 const dotenv = require('dotenv').config();
+const Game = require('./ressources/game');
 
 module.exports = {
 	name: 'pendu',
 	description: 'Un jeu du pendu !',
 	guildOnly: true,
-	started: false,
+	startedChannels: [],
 	async execute(message, args) {
 
-		try {
-			// If the game is already started, then return immediately.
-			if (this.started) {
+		try {			
+
+			if (this.startedChannels.includes(message.channel.id)) {
 				message.reply(`Le jeu du pendu est déjà lancé sur le channel !`);
 				return;
 			}
 
 			// Starting the game.
-			this.started = true;
 			message.channel.send('Lancement du jeu du pendu !');
+			this.startedChannels.push(message.channel.id);
 
 			// GENERATE A RANDOM WORD TO FIND
 			// 1 - generate a random number between 0 and the max number of values in dico
-			const getRandomNumber = function getRandomInt(min, max) {
-				min = Math.ceil(0);
-				max = Math.floor(dico.length - 1);
+			const getRandomNumber = () => {
+				const min = Math.ceil(0);
+				const max = Math.floor(dico.length - 1);
 				return Math.floor(Math.random() * (max - min + 1)) + min;
 			}
 			// 2 - generate a wordToFind using our randomnumber as index of our array
@@ -44,6 +45,7 @@ module.exports = {
 
 			// This is the round fonction. It is async as it wait for answers, and it is also recursive while the word isn't find yet.
 			const startRound = async () => {
+
 
 				if (userLetterAnswers.length) {
 					let reply = `**Voici le mot à trouver : \`${maskedWordToFind.join(' ')}\`**. \nEssais : **${tries}**. \nLes lettres \`${userLetterAnswers.join(',')}\` ont déjà été proposées.`;
@@ -102,7 +104,7 @@ module.exports = {
 						if (maskedWordToFind.join('') === wordToFind) {
 							message.channel.send(`FELICITATIONS ! Tu as trouvé le mot ! Il s'agissait bien de ${wordToFind}`);
 							message.channel.send(`Il a fallu ${tries} essais pour trouver. N'hésitez pas à relancer en tapant la commande : \`!pendu\``);
-							this.started = false;
+							this.startedChannels = this.startedChannels.filter(id => id !== message.channel.id);
 							return;
 						// Else we start a new round.
 						} else {
@@ -122,7 +124,7 @@ module.exports = {
 						if (proposedWord === wordToFind) {
 							message.channel.send(`FELICITATIONS ! Tu as trouvé le mot ! Il s'agissait bien de ${wordToFind}`);
 							message.channel.send(`Il a fallu ${tries} essais pour trouver. N'hésitez pas à relancer en tapant la commande : \`!pendu\``);
-							this.started = false;
+							this.startedChannels = this.startedChannels.filter(id => id !== message.channel.id);
 							return;
 						} else {
 							message.channel.send(`Bien tenté ! Mais... Ce n'est pas bon !`);
@@ -132,7 +134,8 @@ module.exports = {
 				}))
 				.catch (collected => {
 					message.channel.send(`Le délai de réponse est terminé. Le pendu n'a pas été trouvé !`);
-					this.started = false;
+					this.startedChannels = this.startedChannels.filter(id => id !== message.channel.id);
+					console.error(`Erreur sur le pendu après exécution du startround`, collected);
 					return;
 				})
 
@@ -141,7 +144,8 @@ module.exports = {
 		}
 		catch (error) {
 			message.channel.send(`Désolé, il y a eu une erreur.`);
-			this.started = false;
+			console.error(`Erreur au moment du try initial du pendu`, error);
+			this.startedChannels = this.startedChannels.filter(id => id !== message.channel.id);
 		}
 
 	}
