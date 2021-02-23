@@ -41,24 +41,40 @@ module.exports = {
 			let userLetterAnswers = [];
 			let userWordAnswers = [];
 			let tries = 0;
+			let fails = 0;
 
 			// This filter will be used to push only the answers that don't begin with the prefix, are not from a bot, and don't include spaces in the awaitMessages collection.
 			const filter = msg => msg.content.startsWith(process.env.PREFIX) === false && msg.author.bot === false && msg.content.includes(' ') === false;
 
+			
+
 			// This is the round fonction. It is async as it wait for answers, and it is also recursive while the word isn't find yet.
 			const startRound = async () => {
 
+				// Prepare an embed message
+				let gameStatusEmbed = new Discord.MessageEmbed()
+					.setColor('#0099ff')
+					.setTitle(`Mot à trouver : \`${maskedWordToFind.join(' ')}\``)
+					.setDescription(`Nombre d'essais : ${tries}`)
+					.setAuthor('Jeu du Pendu')
+					.setImage(`http://www.prisma-craft.fr/images/pendu${fails}.PNG`)
+					.addFields(
+						{ name: 'Lettres proposées : ', value: `${userLetterAnswers.join(',') || 'aucune'}`, inline: true},
+						{ name: 'Mots proposés : ', value: `${userWordAnswers.join(',') || 'aucun'}`, inline: true},
+						{ name: 'Echecs : ', value: `${fails || '0'}`, inline: true}
+						);
 
-				if (userLetterAnswers.length) {
-					let reply = `**Voici le mot à trouver : \`${maskedWordToFind.join(' ')}\`**. \nEssais : **${tries}**. \nLes lettres \`${userLetterAnswers.join(',')}\` ont déjà été proposées.`;
-
-					if (userWordAnswers.length) {
-						reply += `Mots proposés : \`${userWordAnswers.join(', ')}\`.`;
-					}
-					await message.channel.send(reply);
-				} else {
-					await message.channel.send(`Voici le mot à trouver : \`${maskedWordToFind.join(' ')}\``);
+				if (fails === 7) {
+					gameStatusEmbed
+					.setColor('#B01F00')
+					.setTitle(`Vous avez tué ce pauvre Sodebo !`)
+					.setDescription(`Vous avez perdu après ${tries} essais.`);
+					message.channel.send(gameStatusEmbed);
+					message.channel.send(`Pour relancer une partie, envoyez \`!pendu\``);
+					return;
 				}
+
+				await message.channel.send(gameStatusEmbed)	
 				await message.channel.awaitMessages(filter, {
 						max: 1,
 						time: 3600000,
@@ -95,6 +111,7 @@ module.exports = {
 
 						// Send the correct message to the user if there is a letter found or not
 						if (letterFound === 0) {
+							fails++;
 							message.channel.send(`C'est raté ! ${message.author} n'a pas trouvé de lettre, quel(le) naze !`);
 						} else if (letterFound === 1) {
 							message.channel.send(`Bravo ${message.author} ! tu as trouvé 1 lettre du mot.`);
@@ -104,7 +121,12 @@ module.exports = {
 
 						// If maskedwordtofind is equel to the wordtofind all the letters have been found so we can end the game.
 						if (maskedWordToFind.join('') === wordToFind) {
-							message.channel.send(`FELICITATIONS ! Tu as trouvé le mot ! Il s'agissait bien de ${wordToFind}`);
+							
+							gameStatusEmbed
+							.setColor('#15EC00')
+							.setTitle(`Félicitation ! Le mot était bien ${wordToFind} !`)
+							.setImage('https://media0.giphy.com/media/cQNRp4QA8z7B6/giphy.gif?cid=ecf05e47pbx59v5npozdfy1n05xxqjmgjh5w0sr13th0mg9h&rid=giphy.gif');
+							message.channel.send(gameStatusEmbed);
 							message.channel.send(`Il a fallu ${tries} essais pour trouver. N'hésitez pas à relancer en tapant la commande : \`!pendu\``);
 							this.startedChannels = this.startedChannels.filter(id => id !== message.channel.id);
 							return;
@@ -124,7 +146,11 @@ module.exports = {
 						tries++;
 						message.channel.send(`${message.author} nous propose le mot : ${proposedWord}...`);
 						if (proposedWord === wordToFind) {
-							message.channel.send(`FELICITATIONS ! Tu as trouvé le mot ! Il s'agissait bien de ${wordToFind}`);
+							gameStatusEmbed
+							.setColor('#15EC00')
+							.setTitle(`Félicitation ! Le mot était bien ${wordToFind} !`)
+							.setImage('https://media0.giphy.com/media/cQNRp4QA8z7B6/giphy.gif?cid=ecf05e47pbx59v5npozdfy1n05xxqjmgjh5w0sr13th0mg9h&rid=giphy.gif');
+							message.channel.send(gameStatusEmbed);
 							message.channel.send(`Il a fallu ${tries} essais pour trouver. N'hésitez pas à relancer en tapant la commande : \`!pendu\``);
 							this.startedChannels = this.startedChannels.filter(id => id !== message.channel.id);
 							return;
