@@ -7,6 +7,7 @@
 const fs = require('fs'); // file reader
 const Discord = require('discord.js'); // discord.js lib
 const dotenv = require('dotenv'); // to access .env
+const pendu = require('./commands/fun/pendu');
 dotenv.config(); // to launch process.env
 const prefix = process.env.PREFIX;
 

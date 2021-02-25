@@ -2,13 +2,12 @@ const Discord = require('discord.js');
 const dico = require('./ressources/dico');
 const dotenv = require('dotenv').config();
 
-// TODO : ajouter les embed messages, avec des images de pendu ! Possibilité en arguments de mettre un max d'essai
-
 module.exports = {
 	name: 'pendu',
 	description: 'Un jeu du pendu !',
 	aliases: ['devinette'],
-	guildOnly: true,
+	guildOnly: false,
+
 	startedChannels: [],
 	async execute(message, args) {
 
@@ -64,13 +63,16 @@ module.exports = {
 						{ name: 'Echecs : ', value: `${fails || '0'}`, inline: true}
 						);
 
+				// If there is 7 fails, end the game and return an embed message of loose.
+
 				if (fails === 7) {
 					gameStatusEmbed
 					.setColor('#B01F00')
-					.setTitle(`Vous avez tué ce pauvre Sodebo !`)
+					.setTitle(`PERDU ! C'était ${wordToFind}.`)
 					.setDescription(`Vous avez perdu après ${tries} essais.`);
 					message.channel.send(gameStatusEmbed);
 					message.channel.send(`Pour relancer une partie, envoyez \`!pendu\``);
+					this.startedChannels = this.startedChannels.filter(id => id !== message.channel.id);
 					return;
 				}
 
