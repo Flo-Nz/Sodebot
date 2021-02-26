@@ -1,14 +1,13 @@
 const Discord = require('discord.js');
 const dico = require('./ressources/dico');
-const dotenv = require('dotenv').config();
+require('dotenv').config();
 
-// TODO : ajouter les embed messages, avec des images de pendu ! Possibilité en arguments de mettre un max d'essai
 
 module.exports = {
 	name: 'pendu',
 	description: 'Un jeu du pendu !',
 	aliases: ['devinette'],
-	guildOnly: true,
+	guildOnly: false,
 	startedChannels: [],
 	async execute(message, args) {
 
@@ -43,10 +42,20 @@ module.exports = {
 			let tries = 0;
 			let fails = 0;
 
-			// This filter will be used to push only the answers that don't begin with the prefix, are not from a bot, and don't include spaces in the awaitMessages collection.
-			const filter = msg => msg.content.startsWith(process.env.PREFIX) === false && msg.author.bot === false && msg.content.includes(' ') === false;
+			const specialChar = {'/': true, '@': true, '/': true, '[': true, '&': true, '#': true, ',': true, '+': true, '(': true, ')': true, '$': true, '~': true, '%': true, '.': true, ':': true, '*': true, '?': true, '<': true, '>': true, '{': true, '}': true, ']': true, 'é': true, 'è': true, 'ê': true, };
 
-			
+			const containsSpecialChar = (string) => {
+				const stringArray = string.split('');
+				for (char of stringArray) {
+					if (specialChar[char]) {
+						return true;
+					}
+				} 
+				return false;
+			}
+
+			// This filter will be used to push only the answers that don't begin with the prefix, are not from a bot, and don't include spaces in the awaitMessages collection.
+			const filter = msg => msg.content.startsWith(process.env.PREFIX) === false && msg.author.bot === false && msg.content.includes(' ') === false && containsSpecialChar(msg.content) === false;
 
 			// This is the round fonction. It is async as it wait for answers, and it is also recursive while the word isn't find yet.
 			const startRound = async () => {
@@ -61,20 +70,24 @@ module.exports = {
 					.addFields(
 						{ name: 'Lettres proposées : ', value: `${userLetterAnswers.join(',') || 'aucune'}`, inline: true},
 						{ name: 'Mots proposés : ', value: `${userWordAnswers.join(',') || 'aucun'}`, inline: true},
-						{ name: 'Echecs : ', value: `${fails || '0'}`, inline: true}
+						{ name: 'Echecs : ', value: `${fails || '0'}`, inline: true},
+						{ name: 'Echecs restants avant défaite', value: `${7 - fails || 7}`},
 						);
-
+				
+				// If the fails counter is equal to 7, the users lost the game. We update the embed message and end the game.
 				if (fails === 7) {
 					gameStatusEmbed
 					.setColor('#B01F00')
-					.setTitle(`Vous avez tué ce pauvre Sodebo !`)
+					.setTitle(`C'est mort ! Le mot était : ${wordToFind}`)
 					.setDescription(`Vous avez perdu après ${tries} essais.`);
 					message.channel.send(gameStatusEmbed);
 					message.channel.send(`Pour relancer une partie, envoyez \`!pendu\``);
+					this.startedChannels = this.startedChannels.filter(id => id !== message.channel.id);
 					return;
 				}
 
-				await message.channel.send(gameStatusEmbed)	
+				// If fails counter isn't equel to 7, 
+				await message.channel.send(gameStatusEmbed);
 				await message.channel.awaitMessages(filter, {
 						max: 1,
 						time: 3600000,
