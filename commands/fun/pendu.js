@@ -99,6 +99,7 @@ module.exports = {
 				.then((message => {
 					// there is only one message in our "message collection" so we only stock this message into the message variable.
 					message = message.first();
+					// this is only for diacritics management
 					message.content = message.content.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 					// First, case when we have only one letter
 					if (message.content.length === 1) {
