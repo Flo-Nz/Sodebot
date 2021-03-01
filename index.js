@@ -46,7 +46,7 @@ client.on("message", function (message) {
 
 
     // We don't want our bot to answer other bot's messages 
-    if (message.author.bot || !message.content.startsWith(prefix) || message.channel.id === process.env.IGNORED_CHANNEL) {
+    if (message.author.bot || !message.content.startsWith(prefix) || message.channel.id === process.env.IGNORE_CHANNEL) {
         return;
     }
     
