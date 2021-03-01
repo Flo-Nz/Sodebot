@@ -44,7 +44,7 @@ module.exports = {
 
 			// The following method is made to ignore special characters in our filter
 
-			const specialChar = {'/': true, '@': true, '/': true, '[': true, '&': true, '#': true, ',': true, '+': true, '(': true, ')': true, '$': true, '~': true, '%': true, '.': true, ':': true, '*': true, '?': true, '<': true, '>': true, '{': true, '}': true, ']': true, 'é': true, 'è': true, 'ê': true, };
+			const specialChar = {'/': true, '@': true, '/': true, '[': true, '&': true, '#': true, ',': true, '+': true, '(': true, ')': true, '$': true, '~': true, '%': true, '.': true, ':': true, '*': true, '?': true, '<': true, '>': true, '{': true, '}': true, ']': true };
 
 			const containsSpecialChar = (string) => {
 				const stringArray = string.split('');
