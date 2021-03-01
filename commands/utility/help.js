@@ -12,6 +12,10 @@ module.exports = {
         const data = [];
         const { commands } = message.client;
 
+        if (args.join('').toLowerCase() == "ineedsomebody") {
+                return message.reply('THE BEATLES ROCKS, BUDDY !')
+        }
+
         if (!args.length) {
             data.push('Voici la liste de mes commandes:');
             data.push(commands.map(command => command.name).join(', '));
