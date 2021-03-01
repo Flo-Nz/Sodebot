@@ -42,7 +42,9 @@ module.exports = {
 			let tries = 0;
 			let fails = 0;
 
-			const specialChar = {'/': true, '@': true, '/': true, '[': true, '&': true, '#': true, ',': true, '+': true, '(': true, ')': true, '$': true, '~': true, '%': true, '.': true, ':': true, '*': true, '?': true, '<': true, '>': true, '{': true, '}': true, ']': true, 'é': true, 'è': true, 'ê': true, };
+			// The following method is made to ignore special characters in our filter
+
+			const specialChar = {'/': true, '@': true, '/': true, '[': true, '&': true, '#': true, ',': true, '+': true, '(': true, ')': true, '$': true, '~': true, '%': true, '.': true, ':': true, '*': true, '?': true, '<': true, '>': true, '{': true, '}': true, ']': true };
 
 			const containsSpecialChar = (string) => {
 				const stringArray = string.split('');
@@ -97,7 +99,8 @@ module.exports = {
 				.then((message => {
 					// there is only one message in our "message collection" so we only stock this message into the message variable.
 					message = message.first();
-					
+					// this is only for diacritics management
+					message.content = message.content.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 					// First, case when we have only one letter
 					if (message.content.length === 1) {
 						let proposedLetter = message.content.toUpperCase();
